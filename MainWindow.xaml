@@ -1,26 +1,52 @@
-﻿<Window x:Class="Forget.MainWindow"
+﻿<Window x:Class="Countdown.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:Forget"
+        xmlns:local="clr-namespace:Countdown"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800" WindowStyle="None">
+        Title="MainWindow" Height="450" Width="800" WindowStyle="None" AllowsTransparency="True">
+
+    <Window.Background>
+        <SolidColorBrush Opacity="0.6" Color="#FF3A2F2F" ></SolidColorBrush>
+    </Window.Background>
+
+
     <Grid>
-        <ListView Name="list1" HorizontalAlignment="Center" Height="365" Margin="0,10,0,0" VerticalAlignment="Top" Width="674" ItemsSource="{Binding .}">
+        <ListView Name="list1" HorizontalAlignment="Center" Height="365" Margin="0,14,0,0" VerticalAlignment="Top" Width="674" ItemsSource="{Binding .}" BorderBrush="{x:Null}" FontSize="16" FontWeight="Bold" FontStyle="Normal" FontStretch="Medium" >
+            <ListView.Background>
+                <SolidColorBrush Color="#FFEFF7FF" Opacity="0.6"/>
+            </ListView.Background>
+            <ListView.Foreground>
+                <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+                    <GradientStop Color="Black"/>
+                    <GradientStop Color="Red" Offset="1.3"/>
+                </LinearGradientBrush>
+            </ListView.Foreground>
             <ListView.View>
                 <GridView>
                     <GridViewColumn Header="索引号" Width="0" DisplayMemberBinding="{Binding index}"/>
                     <GridViewColumn Header="事件" Width="350" DisplayMemberBinding="{Binding name}"/>
                     <GridViewColumn Header="时间" Width="200" DisplayMemberBinding="{Binding date}"/>
-                    <GridViewColumn Header="倒计时" Width="100" DisplayMemberBinding="{Binding reduceTime}"/>
+                    <GridViewColumn Header="倒计时" Width="114" DisplayMemberBinding="{Binding reduceTime}"/>
                 </GridView>
             </ListView.View>
         </ListView>
-        <Button Content="新建" HorizontalAlignment="Left" Height="41" Margin="114,384,0,0" VerticalAlignment="Top" Width="87" Click="Button_Click_CreateNewItem"/>
-        <Button Content="删除" HorizontalAlignment="Center" Height="41" Margin="0,384,0,0" VerticalAlignment="Top" Width="87" Click="Button_Click_DeleteItem"/>
-        <Button Content="关闭" HorizontalAlignment="Left" Height="41" Margin="600,384,0,0" VerticalAlignment="Top" Width="87" Click="Button_Click_Shutdown"/>
-        
-        
+        <Button Content="新建" HorizontalAlignment="Left" Height="41" Margin="114,391,0,0" VerticalAlignment="Top" Width="87" Click="Button_Click_CreateNewItem" FontWeight="Normal" FontSize="16">
+            <Button.Background>
+                <SolidColorBrush Color="#FFD6D6D6" Opacity="0.6"/>
+            </Button.Background>
+        </Button>
+        <Button Content="删除" HorizontalAlignment="Center" Height="41" Margin="0,391,0,0" VerticalAlignment="Top" Width="87" Click="Button_Click_DeleteItem" FontWeight="Normal" FontSize="16">
+            <Button.Background>
+                <SolidColorBrush Color="#FFD6D6D6" Opacity="0.59"/>
+            </Button.Background>
+        </Button>
+        <Button Content="关闭" HorizontalAlignment="Left" Height="41" Margin="600,391,0,0" VerticalAlignment="Top" Width="87" Click="Button_Click_Shutdown" FontWeight="Normal" FontSize="16">
+            <Button.Background>
+                <SolidColorBrush Color="#FFD6D6D6" Opacity="0.6"/>
+            </Button.Background>
+        </Button>
     </Grid>
+
 </Window>

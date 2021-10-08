@@ -1,6 +1,4 @@
-﻿using BundleTransformer.Core.Constants;
-using Eco.Persistence.Configuration;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
@@ -17,7 +15,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-namespace Forget
+namespace Countdown
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
@@ -26,16 +24,17 @@ namespace Forget
     {
 
         DataTable dt;
-
+        string savePath = System.Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\Countdown\\countdown.csv";
 
         public MainWindow()
         {
             InitializeComponent();
-            init();
+            initWindow();
             initDataTable();
+            initCSVdata();
         }
 
-        public void init()
+        public void initWindow()
         {
             //窗口拖动
             this.Loaded += (r, s) =>
@@ -48,7 +47,10 @@ namespace Forget
                     }
                 };
             };
-
+            //禁止拉伸
+            this.ResizeMode = ResizeMode.NoResize;
+            //在屏幕中间
+            WindowStartupLocation = WindowStartupLocation.CenterScreen;
         }
 
 
@@ -56,27 +58,52 @@ namespace Forget
         {
             dt = new DataTable();
             //新增4列，即索引号、事件名、时间、是否无期限
-            for (int i = 0; i < 4; i++)
+            dt.Columns.Add(new DataColumn("index", typeof(int)));
+            dt.Columns.Add(new DataColumn("name", typeof(string)));
+            dt.Columns.Add(new DataColumn("date", typeof(string)));
+            dt.Columns.Add(new DataColumn("if_nonexist", typeof(bool)));
+        }
+
+        public void initCSVdata()
+        {
+            FileInfo fi = new FileInfo(savePath);
+            if (fi.Directory.Exists)
             {
-                if(i==0)
+                dt = CSVFileHelper.OpenCSV(savePath);
+                foreach (DataRow row in dt.Rows)
                 {
-                    dt.Columns.Add(new DataColumn("index", typeof(int)));
-                }
-                else
-                {
-                    DataColumn dc = new DataColumn();
-                    dt.Columns.Add(dc);
+                    if (row["if_nonexist"].ToString() == "False")
+                    {
+                        list1.Items.Add(
+                           new Item(
+                               int.Parse(row["index"].ToString()),
+                               row["name"].ToString(),
+                               DateTime.Parse(row["date"].ToString()).Date.ToString().Trim(),
+                               calReduceDay(DateTime.Parse(row["date"].ToString())).ToString().Trim()
+                               ));
+                    }
+                    else
+                    {
+                        list1.Items.Add(
+                           new Item(
+                               int.Parse(row["index"].ToString()),
+                               row["name"].ToString(),
+                               "无期限",
+                               "无期限"
+                               ));
+                    }
                 }
             }
         }
 
-        public void addRow(int index,string name, string date, bool if_nonexist)
+        public void addRow(int index, string name, string date, bool if_nonexist)
         {
             dt.Rows.Add(index, name, date, if_nonexist);
         }
 
         private void Button_Click_Shutdown(object sender, RoutedEventArgs e)
         {
+            CSVFileHelper.SaveCSV(dt, savePath);
             System.Windows.Application.Current.Shutdown();
         }
 
@@ -103,7 +130,7 @@ namespace Forget
                 }
                 else
                 {
-                    addRow(index, newItem.text_itemName.Text.Trim(), "null", false);
+                    addRow(index, newItem.text_itemName.Text.Trim(), "null", true);
                     list1.Items.Add(
                        new Item(
                            index,
@@ -117,20 +144,21 @@ namespace Forget
 
         private void Button_Click_DeleteItem(object sender, RoutedEventArgs e)
         {
-            //DataTable删除
-            Item item = list1.SelectedItem as Item;
-            DataRow[] drs = dt.Select("index = " + item.index);
-            MessageBox.Show(drs[0][0].ToString());
-            dt.Rows.Remove(drs[0]);
-            //ListView删除
-            list1.Items.Remove(list1.SelectedItems[0]);
+            if (list1.SelectedIndex != -1)
+            {
+                //DataTable删除
+                Item item = list1.SelectedItem as Item;
+                DataRow[] drs = dt.Select("index = " + item.index);
+                dt.Rows.Remove(drs[0]);
+                //ListView删除
+                list1.Items.Remove(list1.SelectedItems[0]);
+            }
         }
 
         public double calReduceDay(DateTime itemDate)
         {
-            DateTime dateTime = new DateTime();
-            TimeSpan timeSpan = itemDate.Subtract(dateTime);
-            return timeSpan.TotalDays - 738061;
+            TimeSpan timeSpan = itemDate.Subtract(DateTime.Now.Date);
+            return timeSpan.TotalDays;
         }
 
         public class CSVFileHelper
@@ -194,12 +222,11 @@ namespace Forget
             /// <returns>返回读取了CSV数据的DataTable</returns>
             public static DataTable OpenCSV(string filePath)
             {
-                Encoding encoding = Common.GetType(filePath); //Encoding.ASCII;//
                 DataTable dt = new DataTable();
                 FileStream fs = new FileStream(filePath, System.IO.FileMode.Open, System.IO.FileAccess.Read);
 
                 //StreamReader sr = new StreamReader(fs, Encoding.UTF8);
-                StreamReader sr = new StreamReader(fs, encoding);
+                StreamReader sr = new StreamReader(fs);
                 //string fileContent = sr.ReadToEnd();
                 //encoding = sr.CurrentEncoding;
                 //记录每次读取的一行记录
@@ -254,7 +281,7 @@ namespace Forget
 
     public class Item
     {
-        public Item(int index,string itemName, string itemDate, string reduceDay)
+        public Item(int index, string itemName, string itemDate, string reduceDay)
         {
             this.index = index;
             this.name = itemName;

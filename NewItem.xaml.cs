@@ -10,7 +10,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 
-namespace Forget
+namespace Countdown
 {
     /// <summary>
     /// NewItem.xaml 的交互逻辑
@@ -20,6 +20,27 @@ namespace Forget
         public NewItem()
         {
             InitializeComponent();
+            initWindow();
+        }
+
+        public void initWindow()
+        {
+            //窗口拖动
+            this.Loaded += (r, s) =>
+            {
+                this.MouseDown += (x, y) =>
+                {
+                    if (y.LeftButton == MouseButtonState.Pressed)
+                    {
+                        this.DragMove();
+                    }
+                };
+            };
+            //禁止拉伸
+            this.ResizeMode = ResizeMode.NoResize;
+            //在屏幕中间
+            WindowStartupLocation = WindowStartupLocation.CenterScreen;
+            
         }
 
 
