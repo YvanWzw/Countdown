@@ -24,7 +24,9 @@ namespace Countdown
     {
 
         DataTable dt;
-        string savePath = System.Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\Countdown\\countdown.csv";
+        DataTable dt_daily;
+        string savePath_main = System.Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\Countdown\\countdown.csv";
+        string savePath_daily = System.Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\Countdown\\daily.csv";
 
         public MainWindow()
         {
@@ -32,6 +34,7 @@ namespace Countdown
             initWindow();
             initDataTable();
             initCSVdata();
+            //  MessageBox.Show(DateTime.Now.AddDays(-1).ToShortDateString());
         }
 
         public void initWindow()
@@ -62,14 +65,19 @@ namespace Countdown
             dt.Columns.Add(new DataColumn("name", typeof(string)));
             dt.Columns.Add(new DataColumn("date", typeof(string)));
             dt.Columns.Add(new DataColumn("if_nonexist", typeof(bool)));
+
+            dt_daily = new DataTable();
+            dt_daily.Columns.Add(new DataColumn("indexDaily", typeof(int)));
+            dt_daily.Columns.Add(new DataColumn("nameDaily", typeof(string)));
+            dt_daily.Columns.Add(new DataColumn("dateDaily", typeof(string)));
         }
 
         public void initCSVdata()
         {
-            FileInfo fi = new FileInfo(savePath);
+            FileInfo fi = new FileInfo(savePath_main);
             if (fi.Directory.Exists)
             {
-                dt = CSVFileHelper.OpenCSV(savePath);
+                dt = CSVFileHelper.OpenCSV(savePath_main);
                 foreach (DataRow row in dt.Rows)
                 {
                     if (row["if_nonexist"].ToString() == "False")
@@ -78,7 +86,7 @@ namespace Countdown
                            new Item(
                                int.Parse(row["index"].ToString()),
                                row["name"].ToString(),
-                               DateTime.Parse(row["date"].ToString()).Date.ToString().Trim(),
+                               DateTime.Parse(row["date"].ToString()).Date.ToShortDateString().Trim(),
                                calReduceDay(DateTime.Parse(row["date"].ToString())).ToString().Trim()
                                ));
                     }
@@ -94,6 +102,24 @@ namespace Countdown
                     }
                 }
             }
+
+            FileInfo fi_daily = new FileInfo(savePath_daily);
+            if (fi_daily.Directory.Exists)
+            {
+                dt_daily = CSVFileHelper.OpenCSV(savePath_daily);
+                foreach (DataRow row in dt_daily.Rows)
+                {
+                    if (row["dateDaily"].ToString() != DateTime.Now.ToShortDateString())
+                    {
+                        list2.Items.Add(
+                            new DailyItem(
+                                int.Parse(row["indexDaily"].ToString()),
+                                row["nameDaily"].ToString(),
+                                DateTime.Parse(row["dateDaily"].ToString()).Date.ToShortDateString().Trim()
+                                ));
+                    }
+                }
+            }
         }
 
         public void addRow(int index, string name, string date, bool if_nonexist)
@@ -101,9 +127,15 @@ namespace Countdown
             dt.Rows.Add(index, name, date, if_nonexist);
         }
 
+        public void addDailyRow(int index, string name, string date)
+        {
+            dt_daily.Rows.Add(index, name, date);
+        }
+
         private void Button_Click_Shutdown(object sender, RoutedEventArgs e)
         {
-            CSVFileHelper.SaveCSV(dt, savePath);
+            CSVFileHelper.SaveCSV(dt, savePath_main);
+            CSVFileHelper.SaveCSV(dt_daily, savePath_daily);
             System.Windows.Application.Current.Shutdown();
         }
 
@@ -223,7 +255,7 @@ namespace Countdown
             public static DataTable OpenCSV(string filePath)
             {
                 DataTable dt = new DataTable();
-                FileStream fs = new FileStream(filePath, System.IO.FileMode.Open, System.IO.FileAccess.Read);
+                FileStream fs = new FileStream(filePath, System.IO.FileMode.OpenOrCreate, System.IO.FileAccess.Read);
 
                 //StreamReader sr = new StreamReader(fs, Encoding.UTF8);
                 StreamReader sr = new StreamReader(fs);
@@ -277,20 +309,90 @@ namespace Countdown
                 return dt;
             }
         }
-    }
 
-    public class Item
-    {
-        public Item(int index, string itemName, string itemDate, string reduceDay)
+
+        private void Button_Click_AddDailyItem(object sender, RoutedEventArgs e)
         {
-            this.index = index;
-            this.name = itemName;
-            this.date = itemDate;
-            this.reduceTime = reduceDay;
+            NewItem newItem = new NewItem();
+            newItem.Owner = this;
+            if (newItem.ShowDialog() == true)
+            {
+                int index = dt_daily.Rows.Count + 1;
+                addDailyRow(index, newItem.text_itemName.Text.Trim(), DateTime.Now.AddDays(-1).ToShortDateString());
+                list2.Items.Add(
+                    new DailyItem(
+                        index,
+                        newItem.text_itemName.Text.Trim(),
+                        DateTime.Now.AddDays(-1).ToShortDateString()
+                        ));
+
+            }
         }
-        public int index { get; set; }
-        public string name { get; set; }
-        public string date { get; set; }
-        public string reduceTime { get; set; }
+
+        private void Button_Click_DeleteDailyItem(object sender, RoutedEventArgs e)
+        {
+            if (list2.SelectedIndex != -1)
+            {
+                //DataTable删除
+                DailyItem dailyItem = list2.SelectedItem as DailyItem;
+                DataRow[] drs = dt_daily.Select("indexDaily = " + dailyItem.indexDaily);
+                dt_daily.Rows.Remove(drs[0]);
+                //ListView删除
+                list2.Items.Remove(list2.SelectedItems[0]);
+            }
+        }
+
+        public class Item
+        {
+            public Item(int index, string itemName, string itemDate, string reduceDay)
+            {
+                this.index = index;
+                this.name = itemName;
+                this.date = itemDate;
+                this.reduceTime = reduceDay;
+            }
+            public int index { get; set; }
+            public string name { get; set; }
+            public string date { get; set; }
+            public string reduceTime { get; set; }
+        }
+
+        public class DailyItem
+        {
+            public DailyItem(int indexDaily, string nameDaily, string dateDaily)
+            {
+                this.indexDaily = indexDaily;
+                this.nameDaily = nameDaily;
+                this.dateDaily = dateDaily;
+            }
+            public int indexDaily { get; set; }
+            public string nameDaily { get; set; }
+            public string dateDaily { get; set; }
+        }
+
+        private void list2_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            if (list2.SelectedIndex != -1)
+            {
+                //DataTable删除
+                DailyItem dailyItem = list2.SelectedItem as DailyItem;
+                DataRow[] drs = dt_daily.Select("indexDaily = " + dailyItem.indexDaily);
+                drs[0][2] = DateTime.Now.ToShortDateString();
+                //ListView删除
+                list2.Items.Remove(list2.SelectedItems[0]);
+            }
+        }
+
+        private void MenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            normal.Visibility = Visibility.Visible;
+            daily.Visibility = Visibility.Hidden;
+        }
+
+        private void MenuItem_Click_1(object sender, RoutedEventArgs e)
+        {
+            normal.Visibility = Visibility.Hidden;
+            daily.Visibility = Visibility.Visible;
+        }
     }
 }
