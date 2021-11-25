@@ -78,13 +78,14 @@ namespace Countdown
             if (fi.Directory.Exists)
             {
                 dt = CSVFileHelper.OpenCSV(savePath_main);
+                int i =0;
                 foreach (DataRow row in dt.Rows)
                 {
                     if (row["if_nonexist"].ToString() == "False")
                     {
                         list1.Items.Add(
                            new Item(
-                               int.Parse(row["index"].ToString()),
+                               i,
                                row["name"].ToString(),
                                DateTime.Parse(row["date"].ToString()).Date.ToShortDateString().Trim(),
                                calReduceDay(DateTime.Parse(row["date"].ToString())).ToString().Trim()
@@ -94,12 +95,13 @@ namespace Countdown
                     {
                         list1.Items.Add(
                            new Item(
-                               int.Parse(row["index"].ToString()),
+                               i,
                                row["name"].ToString(),
                                "无期限",
                                "无期限"
                                ));
                     }
+                    ++i;
                 }
             }
 
@@ -107,17 +109,19 @@ namespace Countdown
             if (fi_daily.Directory.Exists)
             {
                 dt_daily = CSVFileHelper.OpenCSV(savePath_daily);
+                int i = 0;
                 foreach (DataRow row in dt_daily.Rows)
                 {
                     if (row["dateDaily"].ToString() != DateTime.Now.ToShortDateString())
                     {
                         list2.Items.Add(
                             new DailyItem(
-                                int.Parse(row["indexDaily"].ToString()),
+                                i,
                                 row["nameDaily"].ToString(),
                                 DateTime.Parse(row["dateDaily"].ToString()).Date.ToShortDateString().Trim()
                                 ));
                     }
+                    ++i;
                 }
             }
         }
@@ -393,6 +397,29 @@ namespace Countdown
         {
             normal.Visibility = Visibility.Hidden;
             daily.Visibility = Visibility.Visible;
+        }
+
+        private void Button_Click_Refresh(object sender, RoutedEventArgs e)
+        {
+            list2.Items.Clear();
+            dt_daily.Clear();
+            FileInfo fi_daily = new FileInfo(savePath_daily);
+            if (fi_daily.Directory.Exists)
+            {
+                dt_daily = CSVFileHelper.OpenCSV(savePath_daily);
+                foreach (DataRow row in dt_daily.Rows)
+                {
+                    if (row["dateDaily"].ToString() != DateTime.Now.ToShortDateString())
+                    {
+                        list2.Items.Add(
+                            new DailyItem(
+                                int.Parse(row["indexDaily"].ToString()),
+                                row["nameDaily"].ToString(),
+                                DateTime.Parse(row["dateDaily"].ToString()).Date.ToShortDateString().Trim()
+                                ));
+                    }
+                }
+            }
         }
     }
 }
