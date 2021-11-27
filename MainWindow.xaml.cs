@@ -25,6 +25,8 @@ namespace Countdown
 
         DataTable dt;
         DataTable dt_daily;
+        int next_dt_num = 0;
+        int next_dt_daily_num = 0;
         string savePath_main = System.Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\Countdown\\countdown.csv";
         string savePath_daily = System.Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\Countdown\\daily.csv";
 
@@ -78,14 +80,13 @@ namespace Countdown
             if (fi.Directory.Exists)
             {
                 dt = CSVFileHelper.OpenCSV(savePath_main);
-                int i =0;
                 foreach (DataRow row in dt.Rows)
                 {
                     if (row["if_nonexist"].ToString() == "False")
                     {
                         list1.Items.Add(
                            new Item(
-                               i,
+                               int.Parse(row["index"].ToString()),
                                row["name"].ToString(),
                                DateTime.Parse(row["date"].ToString()).Date.ToShortDateString().Trim(),
                                calReduceDay(DateTime.Parse(row["date"].ToString())).ToString().Trim()
@@ -95,13 +96,13 @@ namespace Countdown
                     {
                         list1.Items.Add(
                            new Item(
-                               i,
+                               int.Parse(row["index"].ToString()),
                                row["name"].ToString(),
                                "无期限",
                                "无期限"
                                ));
                     }
-                    ++i;
+                    next_dt_num = int.Parse(row["index"].ToString());
                 }
             }
 
@@ -109,19 +110,18 @@ namespace Countdown
             if (fi_daily.Directory.Exists)
             {
                 dt_daily = CSVFileHelper.OpenCSV(savePath_daily);
-                int i = 0;
                 foreach (DataRow row in dt_daily.Rows)
                 {
                     if (row["dateDaily"].ToString() != DateTime.Now.ToShortDateString())
                     {
                         list2.Items.Add(
                             new DailyItem(
-                                i,
+                                int.Parse(row["indexDaily"].ToString()),
                                 row["nameDaily"].ToString(),
                                 DateTime.Parse(row["dateDaily"].ToString()).Date.ToShortDateString().Trim()
                                 ));
                     }
-                    ++i;
+                    next_dt_daily_num = int.Parse(row["indexDaily"].ToString());
                 }
             }
         }
@@ -151,14 +151,13 @@ namespace Countdown
             if (newItem.ShowDialog() == true)
             {
                 //MessageBox.Show(newItem.text_date.Text.Trim());
-                int index = dt.Rows.Count + 1;
-
+                ++next_dt_num;
                 if (newItem.if_nonexist.IsChecked == false && newItem.text_date.Text.Length != 0)
                 {
-                    addRow(index, newItem.text_itemName.Text.Trim(), DateTime.Parse(newItem.text_date.Text.Trim()).Date.ToString().Trim(), false);
+                    addRow(next_dt_num, newItem.text_itemName.Text.Trim(), DateTime.Parse(newItem.text_date.Text.Trim()).Date.ToString().Trim(), false);
                     list1.Items.Add(
                         new Item(
-                            index,
+                            next_dt_num,
                             newItem.text_itemName.Text.Trim(),
                             DateTime.Parse(newItem.text_date.Text.Trim()).Date.ToString().Trim(),
                             calReduceDay(DateTime.Parse(newItem.text_date.Text.Trim())).ToString().Trim()
@@ -166,10 +165,10 @@ namespace Countdown
                 }
                 else
                 {
-                    addRow(index, newItem.text_itemName.Text.Trim(), "null", true);
+                    addRow(next_dt_num, newItem.text_itemName.Text.Trim(), "null", true);
                     list1.Items.Add(
                        new Item(
-                           index,
+                           next_dt_num,
                            newItem.text_itemName.Text.Trim(),
                            "无期限",
                            "无期限"
@@ -321,11 +320,11 @@ namespace Countdown
             newItem.Owner = this;
             if (newItem.ShowDialog() == true)
             {
-                int index = dt_daily.Rows.Count + 1;
-                addDailyRow(index, newItem.text_itemName.Text.Trim(), DateTime.Now.AddDays(-1).ToShortDateString());
+                ++next_dt_daily_num;
+                addDailyRow(next_dt_daily_num, newItem.text_itemName.Text.Trim(), DateTime.Now.AddDays(-1).ToShortDateString());
                 list2.Items.Add(
                     new DailyItem(
-                        index,
+                        next_dt_daily_num,
                         newItem.text_itemName.Text.Trim(),
                         DateTime.Now.AddDays(-1).ToShortDateString()
                         ));
@@ -381,7 +380,10 @@ namespace Countdown
                 //DataTable删除
                 DailyItem dailyItem = list2.SelectedItem as DailyItem;
                 DataRow[] drs = dt_daily.Select("indexDaily = " + dailyItem.indexDaily);
-                drs[0][2] = DateTime.Now.ToShortDateString();
+                if (drs.Length!=0)
+                {
+                    drs[0][2] = DateTime.Now.ToShortDateString();
+                }
                 //ListView删除
                 list2.Items.Remove(list2.SelectedItems[0]);
             }
