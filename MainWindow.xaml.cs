@@ -205,6 +205,13 @@ namespace Countdown
             /// <param name="fileName">CSV的文件路径</param>
             public static void SaveCSV(DataTable dt, string fullPath)
             {
+
+                //datatable因不明原因导致序号未按序时导致的不明BUG，故而必须每次存储时将序号有序
+                for(int i=0;i<dt.Rows.Count;i++)
+                {
+                    dt.Rows[i][0] = i;
+                }
+
                 FileInfo fi = new FileInfo(fullPath);
                 if (!fi.Directory.Exists)
                 {
